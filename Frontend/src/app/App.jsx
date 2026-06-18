@@ -37,11 +37,11 @@ function App() {
 
   if(!username){
     return (
-      <main className="h-screen w-full bg-gray-950 p-4 flex gap-4 item-center justify center"> 
+      <main className="h-screen w-full bg-gray-950 p-4 flex gap-4 items-center justify-center"> 
         <form
           onSubmit={handleJoin}
         className="flex flex-col gap-4"> 
-          <input type="text" placeholder="Enter Your Username" className="p-2 rounded-lg bg-gray-800 text-white" value={username} name="username" />
+          <input type="text" placeholder="Enter Your Username" className="p-2 rounded-lg bg-gray-800 text-white"  name="username" />
           <button className="p-2 rounded-lg bg-amber-50 text-gray-950 font-bold" >Join</button>
         </form>
       </main>
