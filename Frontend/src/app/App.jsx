@@ -1,7 +1,7 @@
 import "./App.css"
 import {Editor} from '@monaco-editor/react'
 import {MonacoBinding} from 'y-monaco'
-import { useRef , useMemo , useState} from "react"
+import { useRef , useMemo , useState, useEffect} from "react"
 import * as Y from 'yjs'
 import {SocketIOProvider} from 'y-socket.io'
 
@@ -13,19 +13,39 @@ function App() {
     return new URLSearchParams(window.location.search).get("username") || ""
   })
 
-
+  const [users , setUsers] = useState([])
 
   const handleMount = (editor)=>{
     editorRef.current = editor;
     const provider = new SocketIOProvider("https://localhost:3000" , 'monaco' , ydoc , {
       autoConnect:true,
     })
+    //awarness handles the users currentlly connected
+    provider.awareness.setLocalStateField("user" , {username})
+    provider.awareness.on("change" , ()=>{
+      const states = Array.from(provider.awareness.getStates().values)
+      setUsers = (states.filter(user => Boolean(user.username)).map(state=>state.user))
+    })
+    
+    function handleBeforeUnload(){
+      provider.awareness.setLocalStateField("users" , null)
+    }
+
+    window.addEventListener("beforeunload" , handleBeforeUnload)
+
+
     const monacoBinding = new MonacoBinding(
       yText,
       editorRef.current.getModel(),
       new Set([editorRef.current]),
       provider.awareness
     )
+
+    return ()=>{
+      monacoBinding.destroy()
+      provider.disconnect()
+      window.removeEventListener("beforeunload" , handleBeforeUnload)
+    }
 
   }
 
@@ -35,6 +55,23 @@ function App() {
     window.history.pushState({} , "" , "?username=" + e.target.username.value)
   }
 
+  useEffect(()=>{
+    if(username && editorRef.current){
+        const provider = new SocketIOProvider("https://localhost:3000" , 'monaco' , ydoc , {
+        autoConnect:true,
+    })
+    const monacoBinding = new MonacoBinding(
+      yText ,
+      editorRef.current.getModel(),
+      new Set([editorRef.current]),
+      provider.awareness
+    )
+    }
+  },[
+    editorRef.current,
+    username
+  ])
+  
   if(!username){
     return (
       <main className="h-screen w-full bg-gray-950 p-4 flex gap-4 items-center justify-center"> 
